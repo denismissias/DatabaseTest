@@ -3,6 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using Dapper;
+using Newtonsoft.Json;
 
 namespace DatabaseTest.Controllers
 {
@@ -11,9 +13,30 @@ namespace DatabaseTest.Controllers
     {
         // GET api/values
         [HttpGet]
-        public IEnumerable<string> Get()
+        public string Get()
         {
-            return new string[] { "value1", "value2" };
+            BaseRepository br = new BaseRepository("Server=localhost;Database=sakila;Uid=root;Pwd=admin", String.Empty);
+
+            using (var connection = br.GetConnection())
+            {
+                try
+                {
+                    MySqlHasBool model = connection.Query<dynamic>(@"select actor_id, first_name, last_name, last_update from actor where actor_id = @Id", new { Id = 1 }).FirstOrDefault();
+
+                    if (model != null)
+                    {
+                        return JsonConvert.SerializeObject(model);
+                    }
+                    else
+                    {
+                        return null;
+                    }
+                }
+                catch (Exception e)
+                {
+                    throw new Exception(e.Message);
+                }
+            }
         }
 
         // GET api/values/5
